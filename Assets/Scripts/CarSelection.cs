@@ -19,6 +19,9 @@ public class CarSelection : MonoBehaviour
     public GameObject cam1;
     public GameObject cam2;
 
+    [Header("Animation")]
+    public Animator cameraAnimator;
+
     private int currentCar;
     private GameObject[] carList;
 
@@ -27,6 +30,22 @@ public class CarSelection : MonoBehaviour
         PlayButton.SetActive(false);
         cam2.SetActive(false); 
         chooseCar(0);
+        
+        if (cameraAnimator != null)
+        {
+            cameraAnimator.GetComponent<Animator>().enabled = true;
+            StartCoroutine(WaitForAnimationToEnd());
+        }
+    }
+
+    private IEnumerator WaitForAnimationToEnd()
+    {
+        AnimationClip[] clips = cameraAnimator.runtimeAnimatorController.animationClips;
+        float waitTime = clips[0].length;
+        
+        yield return new WaitForSeconds(waitTime);
+        
+        skipButton();
     }
 
     private void Start(){
