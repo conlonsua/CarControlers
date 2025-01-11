@@ -10,7 +10,7 @@ public class OpponentCar : MonoBehaviour
     public float accenleration = 1f;
     public float turningSpeed = 150f;
     public float breakSpeed = 12f;
-    public float movingSpeed = 20f;
+    public float movingSpeed ;
 
     [Header("Destination Var")]
     public Vector3 destination;
@@ -45,9 +45,9 @@ public class OpponentCar : MonoBehaviour
     }
 
     public void LocateDestination (Vector3 destination){
-            this.destination =  destination;
-            destinationReached = false;
+        this.destination =  destination;
+        destinationReached = false;
 
-            currentSpeed = movingSpeed;
-        }
+        currentSpeed = movingSpeed;
+    }
 }

@@ -35,7 +35,7 @@ public class Finish : MonoBehaviour
 
     IEnumerator waitforthefinishUI(){
         gameObject.GetComponent<BoxCollider>().enabled = false;
-        yield return new WaitForSeconds(20f);
+        yield return new WaitForSeconds(10f);
         gameObject.GetComponent<BoxCollider>().enabled = true;
     }
 

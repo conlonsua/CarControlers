@@ -27,7 +27,8 @@ public class PlayerCarController : MonoBehaviour
     private float presentAcceleration = 0f;
 
     [Header("Car Steering")]
-    public float wheelsTorque = 150f;
+    public float maxSteeringAngle = 45f;        // Góc lái tối đa (thay wheelsTorque)
+    public float steeringSensitivity = 4.5f;    // Hệ số nhạy của góc lái
     private float presentTurAngle = 0f;
 
     [Header("Car Sound")]
@@ -35,8 +36,19 @@ public class PlayerCarController : MonoBehaviour
     public AudioClip accelerationSound;
     public AudioClip slowAcceleraionSound;
     public AudioClip stopSound;
+    
+    [Header("Timer")]
+    public float raceTime = 0f;
+    private bool isRacing = false;
+
+    private void Start() {
+        isRacing = true;
+    }
 
     private void Update(){
+        if (isRacing) {
+            raceTime += Time.deltaTime;
+        }
         MoveCar();
         CarSteering();
     }
@@ -62,7 +74,14 @@ public class PlayerCarController : MonoBehaviour
     }
 
     private void CarSteering(){
-        presentTurAngle = wheelsTorque * SimpleInput.GetAxis("Horizontal");
+        // Tính góc lái với độ nhạy và giới hạn góc tối đa
+        float steeringInput = SimpleInput.GetAxis("Horizontal");
+        presentTurAngle = maxSteeringAngle * steeringInput * steeringSensitivity;
+        
+        // Giới hạn góc lái trong khoảng [-maxSteeringAngle, maxSteeringAngle]
+        presentTurAngle = Mathf.Clamp(presentTurAngle, -maxSteeringAngle, maxSteeringAngle);
+        
+        // Áp dụng góc lái
         frontLeftWheelCollider.steerAngle = presentTurAngle;
         frontRightWheelCollider.steerAngle = presentTurAngle;
 
@@ -110,4 +129,7 @@ public class PlayerCarController : MonoBehaviour
         backRightWheelCollier.brakeTorque = presentBreakForce;
     }
 
+    public void StopRacing() {
+        isRacing = false;
+    }
 }
