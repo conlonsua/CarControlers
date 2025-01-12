@@ -13,16 +13,21 @@ public class Finish : MonoBehaviour
     [Header("Win/Lose status")]
     public Text status;
 
+    private float startTime;
+    private float finishTime;
+
     private void Start(){
         StartCoroutine(waitforthefinishUI());
+        startTime = Time.time;
     }
 
     private void OnTriggerEnter(Collider other){
         if(other.gameObject.tag == "Player"){
+            finishTime = Time.time - startTime;
             StartCoroutine(finishZoneTimer());
             gameObject.GetComponent<BoxCollider>().enabled = false;
 
-            status.text = "You Win";
+            status.text = $"You Win\nTime: {finishTime:F2} seconds";
             status.color = Color.black;
         }
         else if(other.gameObject.tag == "OpponentCar"){
