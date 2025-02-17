@@ -4,6 +4,23 @@ using UnityEngine;
 
 public class PlayerCarController : MonoBehaviour
 {
+    public enum CarType
+    {
+        FrontWheelDrive,
+        RearWheelDrive,
+        FourWheelDrive
+    }
+
+    public CarType carType = CarType.FourWheelDrive;
+
+    public enum ControlMode
+    {
+        Keyboard,
+        Button
+    };
+
+    public ControlMode control;
+
     [Header("Wheels Collider")]
     public WheelCollider frontLeftWheelCollider;
     public WheelCollider frontRightWheelCollider;
@@ -17,50 +34,57 @@ public class PlayerCarController : MonoBehaviour
     public Transform backRightWheelTransform;
 
     [Header("Car Engine")]
-    //lực gia tốc tối đa
     public float accenlerationForce = 300f;
-    //lực phanh tối đa
     public float breakingForce = 3000f;
-    //Lực phanh hiện tại
     private float presentBreakForce = 0f;
-    //lực gia tốc hiện tại
     private float presentAcceleration = 0f;
 
     [Header("Car Steering")]
-    public float maxSteeringAngle = 45f;        // Góc lái tối đa (thay wheelsTorque)
-    public float steeringSensitivity = 4.5f;    // Hệ số nhạy của góc lái
+    public float wheelsTorque = 150f;
     private float presentTurAngle = 0f;
+    public float maxSteeringAngle = 45f; // Tăng góc lái tối đa
+    public float steeringSensitivity = 4.5f; // Hệ số nhạy của góc lái
 
     [Header("Car Sound")]
     public AudioSource audioSource;
     public AudioClip accelerationSound;
     public AudioClip slowAcceleraionSound;
     public AudioClip stopSound;
-    
-    [Header("Timer")]
-    public float raceTime = 0f;
-    private bool isRacing = false;
 
-    private void Start() {
-        isRacing = true;
+    // Thêm biến cho điều khiển
+    private float vertical = 0f;
+    private float horizontal = 0f;
+
+    void Update(){
+        GetInput();  // Lấy input từ bàn phím hoặc nút bấm
+        MoveCar();   // Di chuyển xe
+        CarSteering();  // Lái xe
     }
 
-    private void Update(){
-        if (isRacing) {
-            raceTime += Time.deltaTime;
+    // Lấy input từ bàn phím hoặc nút bấm
+    void GetInput()
+    {
+        if (control == ControlMode.Keyboard)
+        {
+            horizontal = Input.GetAxis("Horizontal");
+            vertical = Input.GetAxisRaw("Vertical");
         }
-        MoveCar();
-        CarSteering();
+        else if (control == ControlMode.Button)
+        {
+            // Điều khiển bằng nút bấm
+            horizontal = SimpleInput.GetAxis("Horizontal");  // Sử dụng SimpleInput cho ngang
+            vertical = SimpleInput.GetAxis("Vertical");  // Sử dụng SimpleInput cho dọc
+        }
     }
 
-    private void MoveCar(){
-        //hệ thống dẫn động bánh trước
+    void MoveCar(){
+        // Cập nhật động cơ
         frontLeftWheelCollider.motorTorque = presentAcceleration;
         frontRightWheelCollider.motorTorque = presentAcceleration;
         backLeftWheelCollider.motorTorque = presentAcceleration;
         backRightWheelCollier.motorTorque = presentAcceleration;
 
-        presentAcceleration = accenlerationForce * SimpleInput.GetAxis("Vertical");
+        presentAcceleration = accenlerationForce * vertical;
 
         if(presentAcceleration > 0){
             audioSource.PlayOneShot(accelerationSound, 0.2f);
@@ -73,14 +97,16 @@ public class PlayerCarController : MonoBehaviour
         }
     }
 
-    private void CarSteering(){
-        // Tính góc lái với độ nhạy và giới hạn góc tối đa
-        float steeringInput = SimpleInput.GetAxis("Horizontal");
-        presentTurAngle = maxSteeringAngle * steeringInput * steeringSensitivity;
-        
+    void CarSteering(){
+        // Điều chỉnh góc lái theo tốc độ và độ nhạy
+        float speedFactor = Mathf.Clamp(frontLeftWheelCollider.rpm / 1000f, 0.5f, 1f); // Tốc độ càng cao, góc lái càng nhỏ
+        float dynamicSteeringAngle = maxSteeringAngle * steeringSensitivity * speedFactor;
+
+        presentTurAngle = dynamicSteeringAngle * horizontal;
+
         // Giới hạn góc lái trong khoảng [-maxSteeringAngle, maxSteeringAngle]
         presentTurAngle = Mathf.Clamp(presentTurAngle, -maxSteeringAngle, maxSteeringAngle);
-        
+
         // Áp dụng góc lái
         frontLeftWheelCollider.steerAngle = presentTurAngle;
         frontRightWheelCollider.steerAngle = presentTurAngle;
@@ -89,9 +115,7 @@ public class PlayerCarController : MonoBehaviour
         SteeringWheels(frontRightWheelCollider, frontRightWheelTransform);
         SteeringWheels(backLeftWheelCollider, backLeftWheelTransform);
         SteeringWheels(backRightWheelCollier, backRightWheelTransform);
-
     }
-
 
     void SteeringWheels(WheelCollider WC, Transform WT){
         Vector3 position;
@@ -103,9 +127,7 @@ public class PlayerCarController : MonoBehaviour
         WT.rotation = rotation;
     }
 
-    //hệ thống phanh
     public void ApplyBreaks(){
-        // StartCoroutine(carBreaks());
         if (gameObject.activeInHierarchy) {
             StartCoroutine(carBreaks());
         }
@@ -127,9 +149,5 @@ public class PlayerCarController : MonoBehaviour
         frontRightWheelCollider.brakeTorque = presentBreakForce;
         backLeftWheelCollider.brakeTorque = presentBreakForce;
         backRightWheelCollier.brakeTorque = presentBreakForce;
-    }
-
-    public void StopRacing() {
-        isRacing = false;
     }
 }
